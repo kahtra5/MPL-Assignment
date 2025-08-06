@@ -2,6 +2,9 @@
 
 from typing import List
 from fastapi import FastAPI, Depends
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from . import models, schemas, crud
@@ -20,3 +23,16 @@ app = FastAPI(
 def read_root():
     """ A simple health check endpoint. """
     return {"status": "ok", "message": "Welcome to the YouTube API!"}
+
+@app.get("/dashboard", tags=["Frontend"])
+def get_dashboard():
+    """ Serve the frontend dashboard. """
+    return FileResponse("../frontend/index.html")
+
+@app.get("/videos", response_model=List[schemas.Video], tags=["Videos"])
+def read_videos(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+    """
+    Retrieve stored videos in a paginated response, sorted by publishing date.
+    """
+    videos = crud.get_videos(db, skip=skip, limit=limit)
+    return videos
