@@ -6,3 +6,4 @@ celery[redis]
 python-dotenv
 httpx
 google-api-python-client
+jinja2

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YouTube Video Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+  <style>
+    body { padding: 2rem; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    article { margin-bottom: 1rem; }
+    img { aspect-ratio: 16 / 9; object-fit: cover; }
+    small { color: var(--muted-color); }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>YouTube Video Dashboard</h1>
+    <p>Live feed of the latest videos for the query: <strong>"{{ search_query }}"</strong></p>
+
+    <div class="grid" style="grid-template-columns: 1fr auto;">
+      <input type="search" id="search-input" name="search" placeholder="Filter by title...">
+      <select id="sort-select">
+        <option value="desc">Newest First</option>
+        <option value="asc">Oldest First</option>
+      </select>
+    </div>
+    
+    <hr>
+
+    <div id="video-container" class="grid" aria-busy="false">
+      {% for video in videos %}
+        <article>
+          <header><img src="{{ video.thumbnail_url }}" alt="Thumbnail for {{ video.title }}"></header>
+          <h5 style="margin-bottom: 0.5rem;">{{ video.title }}</h5>
+          <small>Published: {{ video.published_at.strftime('%Y-%m-%d %H:%M') }}</small>
+        </article>
+      {% endfor %}
+    </div>
+
+  </main>
+
+  <script>
+    const searchInput = document.getElementById('search-input');
+    const sortSelect = document.getElementById('sort-select');
+    const videoContainer = document.getElementById('video-container');
+
+    // Function to fetch videos from the API and update the DOM
+    async function fetchAndUpdateVideos() {
+      const search = searchInput.value;
+      const sort = sortSelect.value;
+      
+      // Set loading state
+      videoContainer.setAttribute('aria-busy', 'true');
+      
+      try {
+        const response = await fetch(`/videos?limit=50&search=${search}&sort=${sort}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const videos = await response.json();
+
+        // Clear existing videos
+        videoContainer.innerHTML = '';
+        
+        if (videos.length === 0) {
+          videoContainer.innerHTML = '<p>No videos found matching your criteria.</p>';
+        } else {
+          // Create and append new video cards
+          videos.forEach(video => {
+            const article = document.createElement('article');
+            const publishedDate = new Date(video.published_at).toLocaleString('en-CA', {
+              year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
+
+            article.innerHTML = `
+              <header><img src="${video.thumbnail_url}" alt="Thumbnail for ${video.title}"></header>
+              <h5 style="margin-bottom: 0.5rem;">${video.title}</h5>
+              <small>Published: ${publishedDate}</small>
+            `;
+            videoContainer.appendChild(article);
+          });
+        }
+      } catch (error) {
+        videoContainer.innerHTML = `<p>Error fetching videos: ${error.message}</p>`;
+        console.error('Fetch error:', error);
+      } finally {
+        // Unset loading state
+        videoContainer.setAttribute('aria-busy', 'false');
+      }
+    }
+
+    // Add event listeners to trigger the fetch function
+    searchInput.addEventListener('input', fetchAndUpdateVideos);
+    sortSelect.addEventListener('change', fetchAndUpdateVideos);
+  </script>
+</body>
+</html>

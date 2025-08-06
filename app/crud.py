@@ -1,7 +1,6 @@
-# app/crud.py
-
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
+from typing import Optional
 
 from . import models, schemas
 
@@ -30,8 +29,20 @@ def create_video(db: Session, video: schemas.VideoCreate):
     db.refresh(db_video)
     return db_video
 
-def get_videos(db: Session, skip: int = 0, limit: int = 20):
+def get_videos(db: Session, skip: int = 0, limit: int = 25, search: Optional[str] = None, sort: Optional[str] = None):
     """
-    Retrieves a paginated list of videos from the database, sorted by published date.
+    Retrieves videos with filtering, sorting, and pagination.
     """
-    return db.query(models.Video).order_by(models.Video.published_at.desc()).offset(skip).limit(limit).all()
+    query = db.query(models.Video)
+
+    # Apply search filter if provided (case-insensitive)
+    if search:
+        query = query.filter(models.Video.title.ilike(f"%{search}%"))
+
+    # Apply sorting
+    if sort == "asc":
+        query = query.order_by(models.Video.published_at.asc())
+    else: # Default to descending
+        query = query.order_by(models.Video.published_at.desc())
+    
+    return query.offset(skip).limit(limit).all()
