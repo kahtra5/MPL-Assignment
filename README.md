@@ -1,131 +1,149 @@
-# YouTube Videos Dashboard - MPL Assignment
+# YouTube Video Fetcher API & Dashboard
 
-A complete YouTube video fetching and dashboard system with a modern web interface for browsing and filtering videos.
+This project is a scalable system designed to continuously fetch the latest YouTube videos for a specific search query. It stores the video data in a PostgreSQL database and provides a paginated REST API and a simple, interactive web dashboard to view the results.
 
-## 🚀 Quick Start
+## Features
 
-1. **Clone and Setup**:
+- **Continuous Background Fetching:** A Celery worker fetches new videos from the YouTube API every 10 seconds.
+- **Paginated REST API:** A clean, paginated `GET /videos` endpoint to retrieve stored video data.
+- **Resilient API Key Management:** Automatically rotates between multiple API keys if one runs out of quota.
+- **Interactive Dashboard:** A simple frontend built with Jinja2 and vanilla JavaScript to view, filter, and sort the videos in real-time.
+- **Scalable Architecture:** Built with FastAPI, Celery, and Docker, the system is designed for high performance and easy scalability.
+- **Easy Setup:** The entire application stack is containerized with Docker and managed with a single Docker Compose file.
 
-   ```bash
-   git clone <repository-url>
-   cd MPL-Assignment
-   ```
+## Architecture
 
-2. **Configure Environment**:
-   Create a `.env` file with your configuration:
+The system uses a microservices-style architecture where the API server is decoupled from the background data-fetching process.
 
-   ```env
-   POSTGRES_USER=your_db_user
-   POSTGRES_PASSWORD=your_db_password
-   POSTGRES_DB=youtube_videos
-   POSTGRES_HOST=db
-   POSTGRES_PORT=5432
-   REDIS_HOST=redis
-   REDIS_PORT=6379
-   YOUTUBE_API_KEYS=your_api_key1,your_api_key2
-   SEARCH_QUERY=cricket
-   ```
+- **API Server (FastAPI):** Handles user requests for the API and the dashboard.
+- **Database (PostgreSQL):** Stores all video data.
+- **Worker (Celery):** Runs the background task of calling the YouTube API.
+- **Scheduler (Celery Beat):** Triggers the worker task on a regular interval.
+- **Message Broker (Redis):** Passes messages between the scheduler and the worker.
 
-3. **Start the Application**:
+## Technology Stack
 
-   ```bash
-   docker-compose up
-   ```
+- **Backend:** Python, FastAPI, SQLAlchemy
+- **Database:** PostgreSQL
+- **Async Tasks:** Celery, Redis
+- **Frontend:** Jinja2, JavaScript, Pico.css
+- **Containerization:** Docker, Docker Compose
 
-4. **Access the Dashboard**:
-   Open your browser and go to: **http://localhost:8000/dashboard**
+---
 
-## 📊 Dashboard Features
+## Setup and Installation
 
-### 🎯 Main Features
+Follow these steps to get the project running locally.
 
-- **Real-time Video Display**: Shows videos fetched from YouTube API
-- **Advanced Search**: Search by title or description with real-time filtering
-- **Date Range Filtering**: Filter videos by publication date
-- **Responsive Pagination**: Navigate through large video collections
-- **Auto-refresh**: Updates every 30 seconds to show new videos
-- **Mobile-friendly**: Responsive design that works on all devices
+### Prerequisites
 
-### 🔍 Filtering Options
+- [Git](https://git-scm.com/downloads)
+- [Docker](https://www.docker.com/get-started)
+- [Docker Compose](https://docs.docker.com/compose/install/) (usually included with Docker Desktop)
 
-- **Text Search**: Type in the search box to filter by title/description
-- **Date Range**: Use "From Date" and "To Date" to filter by publication time
-- **Results Per Page**: Choose 10, 20, 50, or 100 videos per page
-- **Real-time Updates**: Filters apply automatically as you type
-
-### 📱 User Interface
-
-- **Modern Design**: Clean, professional interface with gradient backgrounds
-- **Video Cards**: Each video shows thumbnail, title, description, and metadata
-- **Statistics**: Real-time stats showing total videos and last update time
-- **Error Handling**: User-friendly error messages and loading states
-
-## 🏗️ Architecture
-
-### Backend Components
-
-- **FastAPI**: REST API server with automatic documentation
-- **PostgreSQL**: Database for storing video metadata
-- **Redis**: Message broker for background tasks
-- **Celery**: Background worker for fetching YouTube videos
-- **SQLAlchemy**: ORM for database operations
-
-### Frontend Components
-
-- **HTML5**: Semantic markup with modern structure
-- **CSS3**: Responsive design with Flexbox/Grid layouts
-- **Vanilla JavaScript**: No frameworks, pure ES6+ code
-- **Font Awesome**: Icons for better visual experience
-
-## 🛠️ API Endpoints
-
-### Core Endpoints
-
-- `GET /`: Health check endpoint
-- `GET /videos`: Retrieve paginated videos (supports `skip` and `limit`)
-- `GET /dashboard`: Serve the frontend dashboard
-- `GET /static/*`: Static file serving for CSS/JS
-
-### API Documentation
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## 🧪 Testing
-
-Run the test script to verify everything works:
+### 1. Clone the Repository
 
 ```bash
-python test_dashboard.py
+git clone <your-repository-url>
+cd youtube-api-project
 ```
 
-This will test:
+### 2. Configure Environment Variables
 
-- API health and connectivity
-- Videos endpoint functionality
-- Dashboard HTML serving
-- Static file serving (CSS/JS)
+Create a `.env` file by copying the example file.
 
-## 📁 Project Structure
+```bash
+cp .env.example .env
+```
+
+Now, open the `.env` file and add your own credentials:
+
+```ini
+# .env
+
+# PostgreSQL Database (you can leave these as they are for local development)
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=supersecret
+POSTGRES_DB=youtube_videos
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+
+# Redis (leave as is)
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# YouTube API Keys (REQUIRED: add your comma-separated keys)
+YOUTUBE_API_KEYS="YOUR_API_KEY_1,YOUR_API_KEY_2"
+
+# Search Query (change if you want)
+SEARCH_QUERY="cricket"
+```
+
+### 3. Run the Application
+
+Use Docker Compose to build the images and start all the services.
+
+```bash
+docker-compose up --build
+```
+
+The application will now be running. The worker will start fetching videos in the background.
+
+---
+
+## Usage
+
+Once the application is running, you can access the following:
+
+### 1. Web Dashboard
+
+The main user interface for viewing videos.
+
+- **URL:** `http://localhost:8000/dashboard`
+
+### 2. API Documentation (Swagger UI)
+
+FastAPI automatically generates interactive API documentation.
+
+- **URL:** `http://localhost:8000/docs`
+
+### 3. API Examples
+
+You can interact with the API directly using tools like `curl` or Postman.
+
+- **Get the first page of videos:**
+  ```bash
+  curl "http://localhost:8000/videos"
+  ```
+- **Get the next page:**
+  ```bash
+  curl "http://localhost:8000/videos?skip=20&limit=20"
+  ```
+- **Search for videos with "highlight" in the title:**
+  ```bash
+  curl "http://localhost:8000/videos?search=highlight"
+  ```
+
+## Project Structure
 
 ```
-MPL-Assignment/
-├── app/                    # Backend application
-│   ├── main.py            # FastAPI application with CORS and static serving
-│   ├── models.py          # SQLAlchemy database models
-│   ├── schemas.py         # Pydantic schemas for API
-│   ├── crud.py            # Database operations
-│   ├── worker.py          # Celery background tasks
-│   ├── database.py        # Database configuration
-│   └── config.py          # Environment configuration
-├── frontend/              # Frontend dashboard
-│   ├── index.html         # Main dashboard HTML
-│   ├── styles.css         # Responsive CSS styling
-│   ├── script.js          # JavaScript for API interaction
-│   └── README.md          # Frontend-specific documentation
-├── docker-compose.yml     # Multi-container setup
-├── Dockerfile            # Container configuration
+.
+├── app/                  # Main Python application source code
+│   ├── __init__.py
+│   ├── config.py         # Loads environment variables
+│   ├── crud.py           # Database interaction logic (CRUD)
+│   ├── database.py       # Database session management
+│   ├── main.py           # FastAPI app, API endpoints
+│   ├── models.py         # SQLAlchemy database models
+│   ├── schemas.py        # Pydantic data schemas
+│   └── worker.py         # Celery worker and tasks
+├── templates/            # Jinja2 HTML templates
+│   └── index.html
+├── .env                  # Your local environment variables (ignored by Git)
+├── .env.example          # Example environment file
+├── .gitignore            # Files and directories to be ignored by Git
+├── docker-compose.yml    # Defines and configures all services
+├── Dockerfile            # Blueprint for building the Python app image
 ├── requirements.txt      # Python dependencies
-├── test_dashboard.py     # Test script for verification
-└── README.md            # This file
+└── README.md             # This file
 ```

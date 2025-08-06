@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache/
+
+# Docker
+postgres_data/
+
+# Environment variables
+.env
+
+# IDE / Editor specific
+.idea/
+.vscode/
+*.swp
+
+# macOS
+.DS_Store

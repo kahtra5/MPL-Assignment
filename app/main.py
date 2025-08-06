@@ -1,5 +1,3 @@
-# app/main.py
-
 from typing import List, Optional
 from fastapi import FastAPI, Depends
 from fastapi import FastAPI, Depends, Request # Add Request
